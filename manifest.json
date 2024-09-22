@@ -6,7 +6,8 @@
     "permissions": [
       "history",
       "tabs",
-      "storage"
+      "storage",
+      "management"
     ],
     "icons": {
       "16": "icons/icon16.png",
