@@ -103,3 +103,6 @@ body {
     color: #fff;
   }
   
+  #clear-all {
+    cursor: pointer;
+  }
