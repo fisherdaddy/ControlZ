@@ -6,53 +6,53 @@ body {
     margin: 0;
     padding: 0;
     background-color: #333;
-    color: #fff;
-  }
-  
-  #history-list {
+    color: #e0e0e0; /* Reduced brightness from #fff to #e0e0e0 */
+}
+
+#history-list {
     max-height: 400px;
     overflow-y: auto;
-  }
-  
-  .history-item {
+}
+
+.history-item {
     padding: 10px;
     border-bottom: 1px solid #555;
     position: relative;
     cursor: pointer;
-  }
-  
-  .history-item:hover {
+}
+
+.history-item:hover {
     background-color: #444;
-  }
-  
-  .history-item .item-content {
+}
+
+.history-item .item-content {
     display: flex;
     align-items: center;
-  }
-  
-  .history-item .favicon {
+}
+
+.history-item .favicon {
     width: 16px;
     height: 16px;
     margin-right: 10px;
     object-fit: cover;
-  }
-  
-  .history-item .title {
+}
+
+.history-item .title {
     font-weight: bold;
-    color: #fff;
+    color: #e0e0e0; /* Reduced brightness from #fff to #e0e0e0 */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     flex: 1;
-  }
-  
-  .history-item .time {
-    color: #ccc;
+}
+
+.history-item .time {
+    color: #bbb; /* Slightly darker than #ccc */
     font-size: 12px;
     margin-top: 5px;
-  }
-  
-  .history-item .delete-btn {
+}
+
+.history-item .delete-btn {
     position: absolute;
     right: 10px;
     top: 50%;
@@ -64,45 +64,45 @@ body {
     padding: 5px;
     border-radius: 3px;
     cursor: pointer;
-  }
-  
-  .history-item:hover .delete-btn {
+}
+
+.history-item:hover .delete-btn {
     display: block;
-  }
-  
-  .history-item .delete-btn:hover {
+}
+
+.history-item .delete-btn:hover {
     background-color: #e60000;
-  }
-  
-  #controls {
+}
+
+#controls {
     padding: 10px;
     border-top: 1px solid #555;
     display: flex;
     align-items: center;
-  }
-  
-  #controls button {
+}
+
+#controls button {
     flex: none;
     margin-right: 10px;
     padding: 5px 10px;
-  }
-  
-  #search {
+}
+
+#search {
     flex: 1;
     padding: 5px;
     color: #000;
-  }
-  
-  #search::placeholder {
+}
+
+#search::placeholder {
     color: #999;
-  }
-  
-  .no-history {
+}
+
+.no-history {
     padding: 20px;
     text-align: center;
-    color: #fff;
-  }
-  
-  #clear-all {
+    color: #e0e0e0; /* Reduced brightness from #fff to #e0e0e0 */
+}
+
+#clear-all {
     cursor: pointer;
-  }
+}

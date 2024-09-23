@@ -1,7 +1,6 @@
 // background.js
 
 const MAX_HISTORY_ITEMS = 100;
-const tabInfo = {};
 
 // 判断是否为空白页面的函数
 function isBlankPage(url) {
@@ -45,29 +44,52 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   }
 });
 
+/**
+ * 更新标签页信息并存储到 chrome.storage.local
+ * @param {number} tabId
+ * @param {string} url
+ * @param {string} title
+ * @param {string} favIconUrl
+ */
 function updateTabInfo(tabId, url, title, favIconUrl) {
-  tabInfo[tabId] = {
+  const tabData = {
     url: url,
     title: title,
     favIconUrl: favIconUrl
   };
+
+  chrome.storage.local.get(['tabInfo'], function (result) {
+    let tabInfo = result.tabInfo || {};
+    tabInfo[tabId] = tabData;
+    chrome.storage.local.set({ 'tabInfo': tabInfo });
+  });
 }
 
 // 监听标签页关闭事件，保存被关闭的标签页信息
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-  const info = tabInfo[tabId];
-  if (info) {
-    const historyItem = {
-      url: info.url,
-      title: info.title,
-      time: Date.now(),
-      favIconUrl: info.favIconUrl
-    };
-    saveHistoryItem(historyItem);
-    delete tabInfo[tabId];
-  }
+  chrome.storage.local.get(['tabInfo'], function (result) {
+    let tabInfo = result.tabInfo || {};
+    const info = tabInfo[tabId];
+    if (info) {
+      const historyItem = {
+        url: info.url,
+        title: info.title,
+        time: Date.now(),
+        favIconUrl: info.favIconUrl
+      };
+      saveHistoryItem(historyItem);
+
+      // 删除已关闭标签的信息
+      delete tabInfo[tabId];
+      chrome.storage.local.set({ 'tabInfo': tabInfo });
+    }
+  });
 });
 
+/**
+ * 保存历史记录项到 chrome.storage.local
+ * @param {Object} historyItem
+ */
 function saveHistoryItem(historyItem) {
   chrome.storage.local.get(['history'], function (result) {
     let history = result.history || [];
