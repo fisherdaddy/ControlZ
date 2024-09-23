@@ -55,8 +55,6 @@ function displayHistory(history) {
       favicon.onerror = function () {
         this.src = chrome.runtime.getURL('icons/default_favicon.png');
       };
-    } else if (item.url.startsWith('chrome-extension://')) {
-      favicon.src = chrome.runtime.getURL('icons/extension_favicon.png');
     } else {
       favicon.src = chrome.runtime.getURL('icons/default_favicon.png');
     }
@@ -97,7 +95,7 @@ function isValidUrl(url) {
   if (!url) return false;
   try {
     const parsedUrl = new URL(url);
-    return ['http:', 'https:', 'chrome-extension:'].includes(parsedUrl.protocol);
+    return ['http:', 'https:', 'chrome:'].includes(parsedUrl.protocol);
   } catch (e) {
     return false;
   }
