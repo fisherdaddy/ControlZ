@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title data-i18n="settings">设置</title>
+  <link rel="stylesheet" href="popup.css">
+  <style>
+    body {
+      width: 100%;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .settings-container {
+      width: 90%;
+      max-width: 420px;
+      background-color: #2a2a2a;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+      margin: 30px auto;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .settings-section {
+      margin-bottom: 32px;
+      position: relative;
+    }
+    
+    .settings-section:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      bottom: -16px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
+    }
+    
+    .settings-title {
+      font-weight: 600;
+      margin-bottom: 20px;
+      font-size: 16px;
+      letter-spacing: 0.4px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+    }
+    
+    .settings-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 18px;
+      background: linear-gradient(to bottom, #7c64ee, #4c8bf5);
+      margin-right: 12px;
+      border-radius: 2px;
+    }
+    
+    .setting-item {
+      margin-bottom: 22px;
+      transition: all 0.3s ease;
+    }
+    
+    .setting-item.focused {
+      transform: translateX(4px);
+    }
+    
+    .setting-item label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #b0b0b0;
+      transition: color 0.2s ease;
+    }
+    
+    .setting-item:hover label {
+      color: #e0e0e0;
+    }
+    
+    .setting-item input[type="number"] {
+      width: 100%;
+      max-width: 120px;
+      padding: 12px 14px;
+      background-color: #3a3a3a;
+      border: 1px solid #444;
+      color: #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+    
+    .setting-item input[type="number"]:focus {
+      border-color: #7c64ee;
+      box-shadow: 0 0 0 3px rgba(124, 100, 238, 0.3);
+      background-color: #404040;
+    }
+    
+    .setting-item select {
+      width: 100%;
+      padding: 12px 14px;
+      background-color: #3a3a3a;
+      border: 1px solid #444;
+      color: #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23e0e0e0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      background-size: 16px;
+      outline: none;
+    }
+    
+    .setting-item select:focus {
+      border-color: #7c64ee;
+      box-shadow: 0 0 0 3px rgba(124, 100, 238, 0.3);
+      background-color: #404040;
+    }
+    
+    .settings-buttons {
+      display: flex;
+      justify-content: center;
+      margin-top: 32px;
+      gap: 16px;
+    }
+    
+    .settings-buttons button {
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #save-settings {
+      background: linear-gradient(135deg, #7c64ee, #4c8bf5);
+      color: white;
+      flex: 1;
+      max-width: 180px;
+    }
+    
+    #save-settings:hover {
+      background: linear-gradient(135deg, #6953d8, #3b7ae4);
+      box-shadow: 0 5px 15px rgba(124, 100, 238, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    #save-settings.saving::after,
+    #reset-settings.resetting::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transform: translateX(-100%);
+      animation: shimmer 1s ease forwards;
+    }
+    
+    @keyframes shimmer {
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(100%);
+      }
+    }
+    
+    #reset-settings {
+      background-color: transparent;
+      color: #9e9e9e;
+      border: 1px solid #555;
+      padding: 11px 24px;
+      flex: 1;
+      max-width: 120px;
+    }
+    
+    #reset-settings:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: #e0e0e0;
+      border-color: #777;
+    }
+    
+    .message {
+      margin-top: 20px;
+      color: #4CAF50;
+      height: 20px;
+      font-size: 14px;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .message.visible {
+      opacity: 1;
+    }
+    
+    /* 添加开关按钮的样式 */
+    .switch-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .switch-label {
+      margin-bottom: 0 !important;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #444;
+      transition: .3s;
+      border-radius: 26px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background: linear-gradient(to right, #7c64ee, #4c8bf5);
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+
+    /* 添加漂亮的悬停效果 */
+    .setting-item {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .setting-item::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: -12px;
+      right: -12px;
+      bottom: -8px;
+      background: linear-gradient(135deg, rgba(124, 100, 238, 0.05), rgba(76, 139, 245, 0.05));
+      border-radius: 12px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
+    }
+    
+    .setting-item:hover::before {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="settings-container">
+    <div class="settings-section">
+      <div class="settings-title" data-i18n="custom_popup_size">自定义弹窗大小</div>
+      <div class="setting-item">
+        <label data-i18n="width">宽度</label>
+        <input type="number" id="popup-width" min="250" max="800">
+      </div>
+      <div class="setting-item">
+        <label data-i18n="height">高度</label>
+        <input type="number" id="popup-height" min="200" max="600">
+      </div>
+    </div>
+    
+    <div class="settings-section">
+      <div class="settings-title" data-i18n="history_items">历史记录条目数</div>
+      <div class="setting-item">
+        <input type="number" id="history-items-count" min="10" max="500">
+      </div>
+    </div>
+    
+    <div class="settings-section">
+      <div class="settings-title" data-i18n="language">语言</div>
+      <div class="setting-item">
+        <select id="language-select">
+          <option value="en">English</option>
+          <option value="zh">中文</option>
+          <option value="ja">日本語</option>
+          <option value="ko">한국어</option>
+          <option value="de">Deutsch</option>
+          <option value="fr">Français</option>
+          <option value="ru">Русский</option>
+          <option value="es">Español</option>
+          <option value="it">Italiano</option>
+          <option value="pt">Português</option>
+          <option value="ar">العربية</option>
+          <option value="id">Bahasa Indonesia</option>
+          <option value="vi">Tiếng Việt</option>
+          <option value="th">ไทย</option>
+          <option value="nl">Nederlands</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="settings-buttons">
+      <button id="save-settings" data-i18n="save">保存</button>
+      <button id="reset-settings" data-i18n="reset">重置</button>
+    </div>
+    
+    <div class="message" id="settings-message"></div>
+  </div>
+  
+  <script src="i18n.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html> 

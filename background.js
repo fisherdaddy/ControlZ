@@ -1,6 +1,21 @@
 // background.js
 
-const MAX_HISTORY_ITEMS = 100;
+// 初始化MAX_HISTORY_ITEMS为可配置的值
+let MAX_HISTORY_ITEMS = 100;
+
+// 从存储中加载设置
+chrome.storage.local.get(['settings'], function(result) {
+  if (result.settings && result.settings.historyItemsCount) {
+    MAX_HISTORY_ITEMS = result.settings.historyItemsCount;
+  }
+});
+
+// 监听设置更改消息
+chrome.runtime.onMessage.addListener(function(message) {
+  if (message.action === 'updateHistoryItemsCount' && message.count) {
+    MAX_HISTORY_ITEMS = message.count;
+  }
+});
 
 // 判断是否为空白页面的函数
 function isBlankPage(url) {

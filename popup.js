@@ -5,7 +5,29 @@ const faviconCache = new Map();
 // URL del favicon predeterminado
 const DEFAULT_FAVICON = chrome.runtime.getURL('icons/default_favicon.svg');
 
+// 应用设置的函数
+function applySettings() {
+  chrome.storage.local.get(['settings'], function(result) {
+    const settings = result.settings || { 
+      popupWidth: 400, 
+      popupHeight: 400,
+      historyItemsCount: 100, 
+      language: 'zh'
+    };
+    
+    // 应用窗口大小
+    document.body.style.width = `${settings.popupWidth}px`;
+    document.getElementById('history-list').style.maxHeight = `${settings.popupHeight}px`;
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+  // 初始化多语言
+  i18n.initI18n();
+  
+  // 应用设置
+  applySettings();
+  
   loadHistory();
 
   document.getElementById('clear-all').addEventListener('click', function () {
@@ -18,11 +40,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const query = this.value.toLowerCase();
     loadHistory(query);
   });
+  
+  // 添加设置按钮点击事件
+  document.getElementById('settings-btn').addEventListener('click', function() {
+    chrome.runtime.openOptionsPage();
+  });
 });
 
 function loadHistory(query = '') {
-  chrome.storage.local.get(['history'], function (result) {
+  chrome.storage.local.get(['history', 'settings'], function (result) {
     let history = result.history || [];
+    const settings = result.settings || { historyItemsCount: 100 };
+    
     if (query) {
       history = history.filter(item =>
         (item.title && item.title.toLowerCase().includes(query)) ||
@@ -30,11 +59,11 @@ function loadHistory(query = '') {
       );
     }
     
-    // Mostrar la lista inmediatamente
-    const historyItems = history.slice(0, 100);
+    // 显示设置中指定数量的历史记录条目
+    const historyItems = history.slice(0, settings.historyItemsCount);
     displayHistory(historyItems);
     
-    // Cargar favicons en segundo plano, sin bloquear la UI
+    // 加载favicons
     setTimeout(() => {
       loadFavicons(historyItems);
     }, 10);
@@ -109,7 +138,7 @@ function displayHistory(history) {
   if (history.length === 0) {
     const noHistoryDiv = document.createElement('div');
     noHistoryDiv.className = 'no-history';
-    noHistoryDiv.textContent = '没有关闭的页面';
+    noHistoryDiv.textContent = i18n.t('no_closed_pages');
     list.appendChild(noHistoryDiv);
     return;
   }
@@ -148,7 +177,7 @@ function displayHistory(history) {
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'delete-btn';
-    deleteBtn.textContent = '删除';
+    deleteBtn.textContent = i18n.t('delete');
     deleteBtn.addEventListener('click', function (e) {
       e.stopPropagation();
       deleteHistoryItem(item);
@@ -191,16 +220,16 @@ function getTimeAgo(timestamp) {
   const diff = now - timestamp;
   const seconds = Math.floor(diff / 1000);
   if (seconds < 60) {
-    return `${seconds} s ago`;
+    return `${seconds} ${i18n.t('s_ago')}`;
   }
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) {
-    return `${minutes} min ago`;
+    return `${minutes} ${i18n.t('min_ago')}`;
   }
   const hours = Math.floor(minutes / 60);
   if (hours < 24) {
-    return `${hours} h ago`;
+    return `${hours} ${i18n.t('h_ago')}`;
   }
   const days = Math.floor(hours / 24);
-  return `${days} d ago`;
+  return `${days} ${i18n.t('d_ago')}`;
 }

@@ -2,7 +2,7 @@
 
 body {
     font-family: Arial, sans-serif;
-    width: 320px;
+    width: 400px;
     margin: 0;
     padding: 0;
     background-color: #333;
@@ -90,16 +90,19 @@ body {
 }
 
 #controls {
+    display: flex;
     padding: 10px;
     border-top: 1px solid #555;
-    display: flex;
-    align-items: center;
+    background-color: #333;
+    position: sticky;
+    bottom: 0;
+    align-items: center; /* 确保垂直居中对齐 */
+    gap: 10px; /* 添加间距，防止元素重叠 */
 }
 
 #controls button {
-    flex: none;
+    padding: 6px 10px;
     margin-right: 10px;
-    padding: 5px 10px;
     background-color: #444;
     color: #e0e0e0;
     border: none;
@@ -114,10 +117,11 @@ body {
 
 #search {
     flex: 1;
-    padding: 5px;
+    padding: 8px 12px; /* 稍微调整内边距 */
     color: #000;
-    border-radius: 3px;
+    border-radius: 6px; /* 增加圆角 */
     border: none;
+    margin-right: 10px; /* 添加右侧间距，与设置按钮保持距离 */
 }
 
 #search::placeholder {
@@ -132,4 +136,28 @@ body {
 
 #clear-all {
     cursor: pointer;
+}
+
+.settings-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    border-radius: 50%; /* 圆形按钮 */
+    background: linear-gradient(135deg, #4c8bf5, #7c64ee) !important; /* 现代渐变色 */
+    color: white !important;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(124, 100, 238, 0.3); /* 添加阴影 */
+    margin-left: 0 !important; /* 移除旧的自动左边距 */
+    padding: 0 !important; /* 移除内边距，使用固定大小 */
+}
+
+.settings-icon:hover {
+    background: linear-gradient(135deg, #3b7ae4, #6953d8) !important; /* 悬停时的渐变色 */
+    transform: translateY(-1px); /* 悬停时微微上浮 */
+    box-shadow: 0 4px 12px rgba(124, 100, 238, 0.4); /* 增强阴影 */
 }
