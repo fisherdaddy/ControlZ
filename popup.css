@@ -12,6 +12,7 @@ body {
 #history-list {
     max-height: 400px;
     overflow-y: auto;
+    will-change: contents; /* Mejora el rendimiento de desplazamiento */
 }
 
 .history-item {
@@ -19,6 +20,7 @@ body {
     border-bottom: 1px solid #555;
     position: relative;
     cursor: pointer;
+    transition: background-color 0.2s ease; /* Transición suave al pasar el ratón */
 }
 
 .history-item:hover {
@@ -35,6 +37,19 @@ body {
     height: 16px;
     margin-right: 10px;
     object-fit: cover;
+    background-color: transparent;
+    flex-shrink: 0; /* Evita que el favicon se reduzca */
+    border-radius: 3px; /* Bordes redondeados */
+    transition: opacity 0.2s ease; /* Transición suave de opacidad */
+    opacity: 1;
+    /* Reservar espacio para favicon durante la carga */
+    min-width: 16px;
+    min-height: 16px;
+    display: block;
+}
+
+.history-item .favicon[src=""] {
+    opacity: 0;
 }
 
 .history-item .title {
@@ -85,12 +100,24 @@ body {
     flex: none;
     margin-right: 10px;
     padding: 5px 10px;
+    background-color: #444;
+    color: #e0e0e0;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#controls button:hover {
+    background-color: #555;
 }
 
 #search {
     flex: 1;
     padding: 5px;
     color: #000;
+    border-radius: 3px;
+    border: none;
 }
 
 #search::placeholder {

@@ -27,19 +27,33 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         if (chrome.runtime.lastError) {
           console.log(chrome.runtime.lastError);
           // 如果获取扩展信息失败，使用默认的扩展图标
-          favIconUrl = chrome.runtime.getURL('icons/extension_favicon.png');
+          favIconUrl = chrome.runtime.getURL('icons/default_favicon.svg');
         } else if (extensionInfo && extensionInfo.icons && extensionInfo.icons.length > 0) {
           // 使用最大尺寸的图标
           favIconUrl = extensionInfo.icons[extensionInfo.icons.length - 1].url;
         } else {
           // 如果没有找到图标，使用默认的扩展图标
-          favIconUrl = chrome.runtime.getURL('icons/extension_favicon.png');
+          favIconUrl = chrome.runtime.getURL('icons/default_favicon.svg');
         }
 
         updateTabInfo(tabId, tab.url, tab.title, favIconUrl);
+        // 立即保存到历史记录
+        saveHistoryItem({
+          url: tab.url,
+          title: tab.title,
+          time: Date.now(),
+          favIconUrl: favIconUrl
+        });
       });
     } else {
       updateTabInfo(tabId, tab.url, tab.title, favIconUrl);
+      // 立即保存到历史记录
+      saveHistoryItem({
+        url: tab.url,
+        title: tab.title,
+        time: Date.now(),
+        favIconUrl: favIconUrl
+      });
     }
   }
 });
