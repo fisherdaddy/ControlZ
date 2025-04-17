@@ -2,8 +2,8 @@
 
 // 默认设置
 const DEFAULT_SETTINGS = {
-  popupWidth: 400,
-  popupHeight: 400,
+  popupWidth: 600,
+  popupHeight: 540,
   historyItemsCount: 100,
   language: 'en'
 };
@@ -81,7 +81,7 @@ function saveSettings() {
   
   // 验证输入范围
   settings.popupWidth = Math.min(Math.max(settings.popupWidth, 250), 800);
-  settings.popupHeight = Math.min(Math.max(settings.popupHeight, 200), 600);
+  settings.popupHeight = Math.min(Math.max(settings.popupHeight, 200), 540);
   settings.historyItemsCount = Math.min(Math.max(settings.historyItemsCount, 10), 500);
   
   // 更新输入框的值，以防范围被调整

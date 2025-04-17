@@ -4,20 +4,28 @@
 const faviconCache = new Map();
 // URL del favicon predeterminado
 const DEFAULT_FAVICON = chrome.runtime.getURL('icons/default_favicon.svg');
+// 设置更长的图标加载超时时间
+const FAVICON_LOAD_TIMEOUT = 2000; // 2秒超时
 
 // 应用设置的函数
 function applySettings() {
   chrome.storage.local.get(['settings'], function(result) {
     const settings = result.settings || { 
-      popupWidth: 400, 
-      popupHeight: 400,
+      popupWidth: 600, 
+      popupHeight: 540,
       historyItemsCount: 100, 
       language: 'zh'
     };
     
     // 应用窗口大小
     document.body.style.width = `${settings.popupWidth}px`;
-    document.getElementById('history-list').style.maxHeight = `${settings.popupHeight}px`;
+    
+    // 设置历史记录列表高度，考虑控制面板的高度
+    const controlsHeight = document.getElementById('controls').offsetHeight;
+    // 减去控制栏的高度和内边距，防止双滚动条
+    const listHeight = settings.popupHeight - controlsHeight - 1; // 减1px边框
+    document.getElementById('history-list').style.maxHeight = `${listHeight}px`;
+    document.getElementById('history-list').style.height = `${listHeight}px`;
   });
 }
 
@@ -70,57 +78,121 @@ function loadHistory(query = '') {
   });
 }
 
-// Función para cargar los favicons en segundo plano
+// 改进图标加载功能
 function loadFavicons(historyItems) {
   historyItems.forEach(item => {
-    if (!isValidUrl(item.favIconUrl) || faviconCache.has(item.favIconUrl)) {
-      // Si ya está en caché o no es válido, no es necesario cargar
+    // 如果URL为空或者不是有效的URL，直接使用默认图标
+    if (!item.favIconUrl || !isValidUrl(item.favIconUrl)) {
+      faviconCache.set(item.favIconUrl || 'empty', DEFAULT_FAVICON);
+      updateFaviconInDOM(item.favIconUrl || 'empty', DEFAULT_FAVICON);
       return;
     }
     
+    // 如果图标已在缓存中，无需重新加载
+    if (faviconCache.has(item.favIconUrl)) {
+      return;
+    }
+    
+    // 设置默认图标作为临时图标，避免加载过程中显示空白
+    faviconCache.set(item.favIconUrl, DEFAULT_FAVICON);
+    updateFaviconInDOM(item.favIconUrl, DEFAULT_FAVICON);
+    
+    // 创建一个新的图像对象来加载favicon
     const img = new Image();
+    
+    // 设置加载成功时的处理
     img.onload = function() {
       try {
-        faviconCache.set(item.favIconUrl, item.favIconUrl);
-        // Actualizar todos los elementos del DOM que usan este favicon
-        updateFaviconInDOM(item.favIconUrl, item.favIconUrl);
+        // 检查图像是否确实加载成功（有一些图像加载"成功"但实际上尺寸为0）
+        if (img.width > 0 && img.height > 0) {
+          faviconCache.set(item.favIconUrl, item.favIconUrl);
+          updateFaviconInDOM(item.favIconUrl, item.favIconUrl);
+        } else {
+          console.log('Favicon loaded but has invalid dimensions:', item.favIconUrl);
+          faviconCache.set(item.favIconUrl, DEFAULT_FAVICON);
+          updateFaviconInDOM(item.favIconUrl, DEFAULT_FAVICON);
+        }
       } catch (error) {
-        console.log('Error procesando favicon cargado:', error);
+        console.log('Error processing loaded favicon:', error);
         faviconCache.set(item.favIconUrl, DEFAULT_FAVICON);
         updateFaviconInDOM(item.favIconUrl, DEFAULT_FAVICON);
       }
     };
     
+    // 设置加载错误时的处理
     img.onerror = function() {
+      console.log('Failed to load favicon:', item.favIconUrl);
       faviconCache.set(item.favIconUrl, DEFAULT_FAVICON);
-      // Actualizar todos los elementos del DOM que usan este favicon
       updateFaviconInDOM(item.favIconUrl, DEFAULT_FAVICON);
     };
     
-    try {
-      img.src = item.favIconUrl;
-      
-      // Timeout más corto para no bloquear
-      setTimeout(() => {
-        try {
-          if (img.complete) return;
-          img.src = '';
-        } catch (error) {
-          console.log('Error en timeout de favicon:', error);
-          // Si hay un error al manipular la imagen, usar el favicon predeterminado
+    // 创建一个超时定时器，如果图像加载时间超过了设定的超时时间，则中断加载
+    const timeoutId = setTimeout(() => {
+      try {
+        if (!img.complete) {
+          console.log('Favicon load timeout:', item.favIconUrl);
+          img.src = ''; // 中断加载
           faviconCache.set(item.favIconUrl, DEFAULT_FAVICON);
           updateFaviconInDOM(item.favIconUrl, DEFAULT_FAVICON);
         }
-      }, 500);
+      } catch (error) {
+        console.log('Error in favicon timeout handler:', error);
+        faviconCache.set(item.favIconUrl, DEFAULT_FAVICON);
+        updateFaviconInDOM(item.favIconUrl, DEFAULT_FAVICON);
+      }
+    }, FAVICON_LOAD_TIMEOUT);
+    
+    // 尝试加载图标
+    try {
+      // 对某些图标URL可能需要特殊处理，比如数据URI
+      if (item.favIconUrl.startsWith('data:')) {
+        // 验证数据URI格式是否正确
+        if (!/^data:image\/(png|jpg|jpeg|gif|svg\+xml|webp|ico);base64,/.test(item.favIconUrl)) {
+          faviconCache.set(item.favIconUrl, DEFAULT_FAVICON);
+          updateFaviconInDOM(item.favIconUrl, DEFAULT_FAVICON);
+          clearTimeout(timeoutId);
+          return;
+        }
+      }
+      
+      // 设置来源URL，开始加载
+      img.src = item.favIconUrl;
+      
+      // 加载完成后清除超时定时器
+      img.onload = function() {
+        clearTimeout(timeoutId);
+        try {
+          if (img.width > 0 && img.height > 0) {
+            faviconCache.set(item.favIconUrl, item.favIconUrl);
+            updateFaviconInDOM(item.favIconUrl, item.favIconUrl);
+          } else {
+            faviconCache.set(item.favIconUrl, DEFAULT_FAVICON);
+            updateFaviconInDOM(item.favIconUrl, DEFAULT_FAVICON);
+          }
+        } catch (error) {
+          console.log('Error processing loaded favicon:', error);
+          faviconCache.set(item.favIconUrl, DEFAULT_FAVICON);
+          updateFaviconInDOM(item.favIconUrl, DEFAULT_FAVICON);
+        }
+      };
+      
+      img.onerror = function() {
+        clearTimeout(timeoutId);
+        console.log('Failed to load favicon:', item.favIconUrl);
+        faviconCache.set(item.favIconUrl, DEFAULT_FAVICON);
+        updateFaviconInDOM(item.favIconUrl, DEFAULT_FAVICON);
+      };
+      
     } catch (error) {
-      console.log('Error al establecer favicon:', error);
+      console.log('Error setting favicon src:', error);
       faviconCache.set(item.favIconUrl, DEFAULT_FAVICON);
       updateFaviconInDOM(item.favIconUrl, DEFAULT_FAVICON);
+      clearTimeout(timeoutId);
     }
   });
 }
 
-// Actualiza todas las instancias de un favicon en el DOM
+// 更新DOM中的图标
 function updateFaviconInDOM(originalUrl, newUrl) {
   try {
     const faviconElements = document.querySelectorAll(`img.favicon[data-original-src="${originalUrl}"]`);
@@ -128,7 +200,7 @@ function updateFaviconInDOM(originalUrl, newUrl) {
       element.src = newUrl;
     });
   } catch (error) {
-    console.log('Error al actualizar favicon en DOM:', error);
+    console.log('Error updating favicon in DOM:', error);
   }
 }
 
@@ -195,11 +267,19 @@ function displayHistory(history) {
   });
 }
 
+// 优化URL有效性检查功能
 function isValidUrl(url) {
   if (!url) return false;
+  
+  // 数据URI单独处理
+  if (url.startsWith('data:')) {
+    return url.startsWith('data:image/');
+  }
+  
   try {
     const parsedUrl = new URL(url);
-    return ['http:', 'https:', 'chrome:'].includes(parsedUrl.protocol);
+    // 扩展允许的协议列表
+    return ['http:', 'https:', 'chrome:', 'chrome-extension:'].includes(parsedUrl.protocol);
   } catch (e) {
     return false;
   }
