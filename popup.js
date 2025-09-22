@@ -11,10 +11,10 @@ const FAVICON_LOAD_TIMEOUT = 2000; // 2秒超时
 function applySettings() {
   chrome.storage.local.get(['settings'], function(result) {
     const settings = result.settings || { 
-      popupWidth: 600, 
-      popupHeight: 540,
+      popupWidth: 400, 
+      popupHeight: 400,
       historyItemsCount: 100, 
-      language: 'zh'
+      language: 'en'
     };
     
     // 应用窗口大小

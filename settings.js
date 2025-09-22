@@ -2,8 +2,8 @@
 
 // 默认设置
 const DEFAULT_SETTINGS = {
-  popupWidth: 600,
-  popupHeight: 540,
+  popupWidth: 400,
+  popupHeight: 400,
   historyItemsCount: 100,
   language: 'en'
 };
