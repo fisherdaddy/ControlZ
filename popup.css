@@ -125,7 +125,6 @@ body {
 
 #controls button {
     padding: 6px 10px;
-    margin-right: 10px;
     background-color: #444;
     color: #e0e0e0;
     border: none;
@@ -140,11 +139,11 @@ body {
 
 #search {
     flex: 1;
+    min-width: 0; /* 允许在窄布局下收缩 */
     padding: 8px 12px; /* 稍微调整内边距 */
     color: #000;
     border-radius: 6px; /* 增加圆角 */
     border: none;
-    margin-right: 10px; /* 添加右侧间距，与设置按钮保持距离 */
 }
 
 #search::placeholder {
@@ -176,7 +175,9 @@ body {
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px rgba(124, 100, 238, 0.3); /* 添加阴影 */
     margin-left: 0 !important; /* 移除旧的自动左边距 */
+    margin-right: 0 !important;
     padding: 0 !important; /* 移除内边距，使用固定大小 */
+    flex-shrink: 0;
 }
 
 .settings-icon:hover {
