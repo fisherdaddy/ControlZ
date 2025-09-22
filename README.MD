@@ -31,6 +31,7 @@ A Chrome extension that helps you easily view and manage recently closed tabs. N
 ## ✨ Features
 
 - **Access Up to 100 Recently Closed Tabs**: View your recently closed tabs with just one click.
+- **Accurate Close Tracking**: Tabs are captured the moment they close, so the list always reflects your actual recently closed pages.
 - **Page Title & Timestamp**: Each entry includes the page title and closing time for quick identification.
 - **One-Click Restoration**: Simply click on any item to reopen the corresponding page in a new tab.
 - **Delete Single Records**: Hover over an entry and click the delete button to remove it from history.
@@ -118,6 +119,7 @@ This project is licensed under the Apache License - see the [LICENSE](LICENSE) f
 ## ✨ 功能特性
 
 - **查看最近 100 条关闭记录**：点击扩展程序图标，即可查看最近关闭的标签页。
+- **精确记录关闭事件**：仅在标签页真正关闭时记录，确保列表始终与您最近的关闭历史一致。
 - **显示页面标题和关闭时间**：每条记录包含页面的标题和关闭时间，方便您快速识别。
 - **一键重新打开页面**：点击列表中的任何一项，即可在新标签页中打开对应的页面。
 - **删除单条记录**：将鼠标悬停在某条记录上，点击右侧的"删除"按钮，可以删除该条记录。
