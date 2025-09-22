@@ -54,54 +54,47 @@ function processFavIconUrl(favIconUrl, tabUrl) {
   return DEFAULT_FAVICON;
 }
 
-// 监听标签页更新，保存标签页的 URL、标题和 favicon
+// 监听标签页更新，实时维护标签页信息（仅用于后续关闭记录）
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-  if (tab.status === 'complete' && tab.url) {
-    if (isBlankPage(tab.url)) {
-      // 如果是空白页面，直接返回，不记录
-      return;
-    }
+  const hasMeaningfulUpdate = changeInfo.status === 'complete' ||
+    typeof changeInfo.url === 'string' ||
+    typeof changeInfo.title === 'string' ||
+    typeof changeInfo.favIconUrl === 'string';
 
-    let favIconUrl = processFavIconUrl(tab.favIconUrl, tab.url);
+  if (!hasMeaningfulUpdate) {
+    return;
+  }
 
-    // 检查是否为 Chrome 扩展页面
-    if (tab.url.startsWith('chrome-extension://')) {
-      // 获取扩展 ID
-      const extensionId = new URL(tab.url).hostname;
+  const tabUrl = changeInfo.url || tab.url;
+  if (!tabUrl || isBlankPage(tabUrl)) {
+    return;
+  }
 
-      // 尝试获取扩展的图标
+  const tabTitle = changeInfo.title || tab.title || tabUrl;
+  const favIconCandidate = changeInfo.favIconUrl || tab.favIconUrl;
+  let favIconUrl = processFavIconUrl(favIconCandidate, tabUrl);
+
+  if (tabUrl.startsWith('chrome-extension://')) {
+    try {
+      const extensionId = new URL(tabUrl).hostname;
       chrome.management.get(extensionId, function (extensionInfo) {
         if (chrome.runtime.lastError) {
           console.log(chrome.runtime.lastError);
-          // 如果获取扩展信息失败，使用默认的扩展图标
           favIconUrl = DEFAULT_FAVICON;
         } else if (extensionInfo && extensionInfo.icons && extensionInfo.icons.length > 0) {
-          // 使用最大尺寸的图标
           favIconUrl = extensionInfo.icons[extensionInfo.icons.length - 1].url;
         } else {
-          // 如果没有找到图标，使用默认的扩展图标
           favIconUrl = DEFAULT_FAVICON;
         }
 
-        updateTabInfo(tabId, tab.url, tab.title, favIconUrl);
-        // 立即保存到历史记录
-        saveHistoryItem({
-          url: tab.url,
-          title: tab.title,
-          time: Date.now(),
-          favIconUrl: favIconUrl
-        });
+        updateTabInfo(tabId, tabUrl, tabTitle, favIconUrl);
       });
-    } else {
-      updateTabInfo(tabId, tab.url, tab.title, favIconUrl);
-      // 立即保存到历史记录
-      saveHistoryItem({
-        url: tab.url,
-        title: tab.title,
-        time: Date.now(),
-        favIconUrl: favIconUrl
-      });
+    } catch (error) {
+      console.log('Error resolving extension icon:', error);
+      updateTabInfo(tabId, tabUrl, tabTitle, DEFAULT_FAVICON);
     }
+  } else {
+    updateTabInfo(tabId, tabUrl, tabTitle, favIconUrl);
   }
 });
 
@@ -115,8 +108,8 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 function updateTabInfo(tabId, url, title, favIconUrl) {
   const tabData = {
     url: url,
-    title: title,
-    favIconUrl: favIconUrl
+    title: title || url,
+    favIconUrl: favIconUrl || DEFAULT_FAVICON
   };
 
   chrome.storage.local.get(['tabInfo'], function (result) {
@@ -126,17 +119,69 @@ function updateTabInfo(tabId, url, title, favIconUrl) {
   });
 }
 
-// 监听标签页关闭事件，保存被关闭的标签页信息
-chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
+// 监听标签页关闭事件，将关闭的标签页写入历史记录
+chrome.tabs.onRemoved.addListener(function (tabId) {
   chrome.storage.local.get(['tabInfo'], function (result) {
     let tabInfo = result.tabInfo || {};
-    // 只需删除已关闭标签的信息，不更新历史记录
+    const closedTab = tabInfo[tabId];
+
+    if (closedTab && closedTab.url && !isBlankPage(closedTab.url)) {
+      saveHistoryItem({
+        url: closedTab.url,
+        title: closedTab.title || closedTab.url,
+        time: Date.now(),
+        favIconUrl: closedTab.favIconUrl || DEFAULT_FAVICON
+      });
+    }
+
     if (tabInfo[tabId]) {
       delete tabInfo[tabId];
       chrome.storage.local.set({ 'tabInfo': tabInfo });
     }
   });
 });
+
+// 处理标签页被替换的情况，保持缓存中的信息最新
+chrome.tabs.onReplaced.addListener(function (addedTabId, removedTabId) {
+  chrome.storage.local.get(['tabInfo'], function (result) {
+    let tabInfo = result.tabInfo || {};
+    if (tabInfo[removedTabId]) {
+      tabInfo[addedTabId] = tabInfo[removedTabId];
+      delete tabInfo[removedTabId];
+      chrome.storage.local.set({ 'tabInfo': tabInfo });
+    }
+  });
+});
+
+// 启动或安装时刷新缓存中的标签页信息，避免旧数据干扰
+function refreshTabInfoCache() {
+  chrome.tabs.query({}, function(tabs) {
+    if (chrome.runtime.lastError) {
+      console.log('Failed to refresh tab cache:', chrome.runtime.lastError);
+      return;
+    }
+
+    const tabInfo = {};
+
+    tabs.forEach(tab => {
+      if (!tab || !tab.id || !tab.url || isBlankPage(tab.url)) {
+        return;
+      }
+
+      const favIconUrl = processFavIconUrl(tab.favIconUrl, tab.url);
+      tabInfo[tab.id] = {
+        url: tab.url,
+        title: tab.title || tab.url,
+        favIconUrl: favIconUrl || DEFAULT_FAVICON
+      };
+    });
+
+    chrome.storage.local.set({ 'tabInfo': tabInfo });
+  });
+}
+
+chrome.runtime.onInstalled.addListener(refreshTabInfoCache);
+chrome.runtime.onStartup.addListener(refreshTabInfoCache);
 
 /**
  * 保存历史记录项到 chrome.storage.local
@@ -145,8 +190,15 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
 function saveHistoryItem(historyItem) {
   chrome.storage.local.get(['history'], function (result) {
     let history = result.history || [];
+    const normalizedItem = {
+      url: historyItem.url,
+      title: historyItem.title || historyItem.url,
+      time: historyItem.time || Date.now(),
+      favIconUrl: historyItem.favIconUrl || DEFAULT_FAVICON
+    };
+
     // 不再按URL去重，每次都添加新记录
-    history.unshift(historyItem);
+    history.unshift(normalizedItem);
     if (history.length > MAX_HISTORY_ITEMS) {
       history = history.slice(0, MAX_HISTORY_ITEMS);
     }
